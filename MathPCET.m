@@ -817,6 +817,80 @@ M->mass of the particle in Daltons (Default - protium),
 Distribution->
 Classical or Quantal (for R-oscillator distribution function).";
 
+PartialRateUKMorse::usage="PartialRateUKMorse[V_,DG_,lambda_,MR_,FR_,DE1_,Beta1_,DE2_,Beta2_,d_,T_,mu_,nu_]:
+Parameters:
+V - electronic coupling (kcal/mol),
+DG - reaction free energy (free energy bias) (kcal/mol),
+lambda - solvent reorganization energy (kcal/mol),
+DE1, DE2 - Dissociation energies for reactant and product Morse potentials (kcal/mol),
+Beta1, Beta2 - Beta parameters for reactant and product Morse potenmtials (1/Bohr),
+MR - reduced mass of the donor-acceptor mode (Dalton),
+FR - donor-acceptor mode frequency (1/cm),
+d - equilibrium distance between the minima of the proton potentials (Bohr),
+T - temperature (K),
+mu, nu - quantum numbers for the left and right oscillators, respectively.
+Options:
+M->mass of the particle in Daltons (Default - mass of the proton),
+Overlap->Numerical/Analytical (for Morse overlaps),
+Distribution->
+Classical or Quantal (for R-oscillator distribution function).
+Return partial rate constant in sec^-1.";
+
+TotalRateUKMorse::usage="TotalRateUKMorse[V_,DG_,lambda_,MR_,FR_,DE1_,Beta1_,DE2_,Beta2_,d_,T_,mumax_,numax_]:
+Parameters:
+V - electronic coupling (kcal/mol),
+DG - reaction free energy (free energy bias) (kcal/mol),
+lambda - solvent reorganization energy (kcal/mol),
+DE1, DE2 - Dissociation energies for reactant and product Morse potentials (kcal/mol),
+Beta1, Beta2 - Beta parameters for reactant and product Morse potenmtials (1/Bohr),
+MR - reduced mass of the donor-acceptor mode (Dalton),
+FR - donor-acceptor mode frequency (1/cm),
+d - equilibrium distance between the minima of the proton potentials (Bohr),
+T - temperature (K),
+mumax, numax - highest quantum numbers for the left and right oscillators states, respectively.
+Options:
+M->mass of the particle in Daltons (Default - mass of the proton),
+Overlap->Numerical/Analytical (for Morse overlaps),
+Distribution->
+Classical or Quantal (for R-oscillator distribution function).
+Return total rate constant in sec^-1.";
+
+KIEUKMorse::usage="KIEUKMorse[V_,DG_,lambda_,MR_,FR_,DE1_,Beta1_,DE2_,Beta2_,d_,T_,mumax_,numax_]:
+Parameters:
+V - electronic coupling (kcal/mol),
+DG - reaction free energy (free energy bias) (kcal/mol),
+lambda - solvent reorganization energy (kcal/mol),
+DE1, DE2 - Dissociation energies for reactant and product Morse potentials (kcal/mol),
+Beta1, Beta2 - Beta parameters for reactant and product Morse potenmtials (1/Bohr),
+MR - reduced mass of the donor-acceptor mode (Dalton),
+FR - donor-acceptor mode frequency (1/cm),
+d - equilibrium distance between the minima of the proton potentials (Bohr),
+T - temperature (K),
+mumax, numax - highest quantum numbers for the left and right oscillators states, respectively.
+Options:
+M1,M2->masses of the particle in Daltons (Default - protium and deuterium),
+Overlap->Numerical/Analytical (for Morse overlaps),
+Distribution->
+Classical or Quantal (for R-oscillator distribution function).";
+
+TableRateUKMorse::usage="TableRateUKHarmonic[V_,DG_,lambda_,MR_,FR_,DE1_,Beta1_,DE2_,Beta2_,d_,T_,mumax_,numax_]:
+Parameters:
+V - electronic coupling (kcal/mol),
+DG - reaction free energy (free energy bias) (kcal/mol),
+lambda - solvent reorganization energy (kcal/mol),
+DE1, DE2 - Dissociation energies for reactant and product Morse potentials (kcal/mol),
+Beta1, Beta2 - Beta parameters for reactant and product Morse potenmtials (1/Bohr),
+MR - reduced mass of the donor-acceptor mode (Dalton),
+FR - donor-acceptor mode frequency (1/cm),
+d - equilibrium distance between the minima of the proton potentials (Bohr),
+T - temperature (K),
+mumax, numax - highest quantum numbers for the left and right oscillators states, respectively.
+Options:
+M->mass of the particle in Daltons (Default - protium),
+Overlap->Numerical/Analytical (for Morse overlaps),
+Distribution->
+Classical or Quantal (for R-oscillator distribution function).";
+
 PartialRateRhighTMorse::usage="Partial nonadiabatic first order rate constant k(mu->nu) (1/sec) in high-T limit for proton donor-acceptor mode (Morse potentials).
 PartialRateRhighT[V_,DG_,lambda_,MR_,Freq_,DE1_,Beta1_,DE2_,Beta2_,d_,T_,mu_,nu_].
 Parameters:
@@ -2632,6 +2706,23 @@ HarmonicFranckCondonAveraged[mu_,nu_,f1_,f2_,d_,T_,MR_,FR_,OptionsPattern[{M->Ma
    NIntegrate[integrand[X],{X,0,\[Infinity]}]
 ];
 
+MorseFranckCondonAveraged[mu_,nu_,DE1_,Beta1_,DE2_,Beta2_,d_,T_,MR_,FR_,OptionsPattern[{M->MassH,Overlap->"Numerical",Distribution->"Classical"}]]:=Module[{m,sw,s,s2,distr,integrand},
+   m=OptionValue[M];
+   distr=OptionValue[Distribution];
+   sw=OptionValue[Overlap];
+   s=Switch[sw,
+           "Numerical",     NMorseOverlap[DE1,Beta1,DE2,Beta2,mu,nu,d,M->m],
+           "Analytical",    MorseOverlap[DE1,Beta1,DE2,Beta2,mu,nu,d,M->m],
+           "AnalyticalSym", MorseOverlapSym[DE1,Beta1,mu,nu,d,M->m],
+            _,              NMorseOverlap[DE1,Beta1,DE2,Beta2,mu,nu,d,M->m]];
+   s2=s^2;
+   integrand[x_]:=Switch[distr,
+                        "Classical",s2*PClassical[T,d,MR,FR,x],
+                        "Quantal",  s2*PQuantal[T,d,MR,FR,x],
+                        _,          s2*PClassical[T,d,MR,FR,x]];
+   NIntegrate[integrand[X],{X,0,\[Infinity]}]
+];
+
 (*
 Time correlation functions of the R-oscillator (proton donor-acceptor mode)
 *)
@@ -3654,6 +3745,134 @@ Module[{distr,headings,dg0,la,totalrate,s,s2,alpha,dg,Ea,w,Emu,Enu,Pmu,Z,kmunu,i
 	];
 	Grid[Join[{{info,SpanFromLeft}},{headings},Flatten[Table[{mu,nu,ScientificForm[Pmu[mu],6,NumberFormat->(Row[{#1,"e",#3}]&)],PaddedForm[dg[mu,nu]*au2kcal,{6,3}],PaddedForm[Ea[mu,nu]*au2kcal,{6,3}],ScientificForm[fc[mu,nu],6,NumberFormat->(Row[{#1,"e",#3}]&)],ScientificForm[Exp[-Ea[mu,nu]/(kb*T)],6,NumberFormat->(Row[{#1,"e",#3}]&)],PaddedForm[w[mu,nu],{7,3}]},{mu,0,mumax},{nu,0,numax}],1]],Frame->All,Spacings->{Automatic,1}]
 ];
+
+(*
+Rate constant for Morse proton potentials
+*)
+
+(*
+V - electronic coupling (kcal/mol);
+DG - reaction free energy (free energy bias) (kcal/mol);
+lambda - solvent reorganization energy (kcal/mol);
+M - mass of the particle (Dalton);
+f1 - frequency of the left (proton donor) oscillator;
+f2 - frequency of the right (proton acceptor) oscillator;
+MR - reduced mass of the donor-acceptor mode (Dalton);
+Freq - donor-acceptor mode frequency (1/cm);
+d - equilibrium distance between the minima of the morse potentials (Bohr);
+T - temperature (K);
+mu, nu - quantum numbers for the left and right oscillators, respectively.
+Return partial rate constant in sec^-1.
+*)
+
+PartialRateUKMorse[V_,DG_,lambda_,MR_,FR_,DE1_,Beta1_,DE2_,Beta2_,d_,T_,mu_,nu_,OptionsPattern[{M->MassH,Overlap->"Numerical",Distribution->"Classical"}]]:=Module[{m,sw,distr,prefactor,v2,la,fc,dg,sq,e10,e1,e20,e2,Ea},
+   m=OptionValue[M];
+   sw=OptionValue[Overlap];
+   distr=OptionValue[Distribution];
+   fc=MorseFranckCondonAveraged[mu,nu,DE1,Beta2,DE2,Beta2,d,T,MR,FR,M->m,Overlap->sw,Distribution->distr];
+<------>prefactor=10^12/au2ps;
+<------>v2=(V*kcal2au)^2;
+<------>la=lambda*kcal2au;
+<------>dg=DG*kcal2au;
+<------>sq=Sqrt[\[Pi]/(kb*T*la)];
+<------>e10=kcal2au*MorseEnergy[0,Beta1,DE1,M->m];
+<------>e1=kcal2au*MorseEnergy[mu,Beta1,DE1,M->m];
+<------>e20=kcal2au*MorseEnergy[0,Beta2,DE1,M->m];
+<------>e2=kcal2au*MorseEnergy[nu,Beta2,DE2,M->m];
+<------>Ea=(dg+la+e2-e20-e1+e10)^2/(4*la);
+<------>prefactor*v2*fc*sq*Exp[-Ea/(kb*T)]
+];
+
+TotalRateUKMorse[V_,DG_,lambda_,MR_,FR_,DE1_,Beta1_,DE2_,Beta2_,d_,T_,mumax_,numax_,OptionsPattern[{M->MassH,Overlap->"Numerical",Distribution->"Classical"}]]:=
+Module[{m,sw,distr,Emu,Z,Pmu,mu,nu},
+   m=OptionValue[M];
+   sw=OptionValue[Overlap];
+   distr=OptionValue[Distribution];
+<------>Array[Emu,mumax+1,0];
+<------>Array[Pmu,mumax+1,0];
+<------>Do[Emu[mu]=kcal2au*MorseEnergy[mu,Beta1,DE1,M->m],{mu,0,mumax}];
+<------>Z = Exp[Emu[0]/(kb*T)]*QMorseExact[Beta1,DE1,T,M->m];
+<------>Do[Pmu[mu]=Exp[-(Emu[mu]-Emu[0])/(kb*T)]/Z,{mu,0,mumax}];
+<------>Sum[Pmu[mu]*Sum[PartialRateUKMorse[V,DG,lambda,MR,FR,DE1,Beta1,DE2,Beta2,d,T,mu,nu,M->m,Overlap->sw,Distribution->distr],{nu,0,numax}],{mu,0,mumax}]
+];
+
+(*
+Kinetic isotope effect
+*)
+
+(*
+V - electronic coupling (kcal/mol);
+DG - reaction free energy (free energy bias) (kcal/mol);
+lambda - solvent reorganization energy (kcal/mol);
+MR - reduced mass of the donor-acceptor mode (Dalton);
+FR - donor-acceptor mode frequency (1/cm);
+f1 - frequency of the protium oscillator on the left (1/cm);
+f2 - frequency of the protium oscillator on the right (1/cm);
+d - equilibrium distance between the minima of the morse potentials (Bohr);
+T - temperature (K);
+mumax - highest quantum number for the reactant vibronic states;
+numax - highest quantum number for the product vibronic states.
+*)
+
+KIEUKMorse[V_,DG_,lambda_,MR_,FR_,DE1_,Beta1_,DE2_,Beta2_,d_,T_,mumax_,numax_,OptionsPattern[{M1->MassH,M2->MassD,Overlap->"Numerical",Distribution->"Classical"}]]:=Module[{sw,fx1,fx2,fy1,fy2,mx,my,rate1,rate2},
+   (* assume that the input frequencies are for protium oscillator *)
+   mx=OptionValue[M1];
+   my=OptionValue[M2];
+   sw=OptionValue[Overlap];
+   rate1=TotalRateUKMorse[V,DG,lambda,MR,FR,DE1,Beta1,DE2,Beta2,d,T,mumax,numax,M->mx,Overlap->sw,Distribution->OptionValue[Distribution]];
+   rate2=TotalRateUKMorse[V,DG,lambda,MR,FR,DE1,Beta1,DE2,Beta2,d,T,mumax,numax,M->my,Overlap->sw,Distribution->OptionValue[Distribution]];
+   rate1/rate2
+];
+
+(*
+Table with rate channel contributions
+*)
+
+(*
+V - electronic coupling (kcal/mol);
+DG - reaction free energy (free energy bias) (kcal/mol);
+lambda - solvent reorganization energy (kcal/mol);
+MR - reduced mass of the donor - acceptor mode (Dalton);
+FR - donor - acceptor mode frequency (1/cm);
+M - mass of the particle (Dalton);
+f1 - frequency for the oscillator on the left (1/cm);
+d - equilibrium distance between the minima of the morse potentials (Bohr);
+T - temperature (K);
+mumax - highest quantum number for the reactant vibronic states;
+numax - highest quantum number for the product vibronic states.
+*)
+
+TableRateUKMorse[V_,DG_,lambda_,MR_,FR_,DE1_,Beta1_,DE2_,Beta2_,d_,T_,mumax_,numax_,OptionsPattern[{M->MassH,Overlap->"Numerical",Distribution->"Classical"}]]:=
+Module[{sw,distr,headings,dg0,la,totalrate,s,s2,alpha,dg,Ea,w,Emu,Enu,Pmu,Z,kmunu,fc,info,Mass},
+<------>sw=OptionValue[Overlap];
+<------>distr=OptionValue[Distribution];
+<------>Mass=OptionValue[M];
+<------>headings={"\[Mu]","\[Nu]",strpmu,strdgmunu,strdgddmunu,"<"<>strs2munu<>">","exp(-\[Beta]"<>strdgddmunu<>")","%"};
+<------>info="Isotope: "<>ToString[NumberForm[Mass,3]]<>"amu; "<>strdg00<>"="<>ToString[NumberForm[DG,4]]<>"kcal/mol; \[Lambda]="<>ToString[NumberForm[lambda,4]]<>"kcal/mol; M="<>ToString[NumberForm[MR,3]]<>"amu; \[CapitalOmega]="<>T
+<------>dg0=DG*kcal2au;
+<------>la=lambda*kcal2au;
+<------>totalrate=TotalRateUKHarmonic[V,DG,lambda,MR,FR,DE1,Beta1,DE2,Beta2,d,T,mumax,numax,M->OptionValue[M],Overlap->sw,Distribution->distr];
+<------>Array[fc,{mumax+1,numax+1},{0,0}];
+<------>Array[dg,{mumax+1,numax+1},{0,0}];
+<------>Array[Ea,{mumax+1,numax+1},{0,0}];
+<------>Array[w,{mumax+1,numax+1},{0,0}];
+<------>Array[Emu,mumax+1,0];
+<------>Array[Enu,numax+1,0];
+<------>Array[Pmu,mumax+1,0];
+<------>Do[Emu[mu]=kcal2au*MorseEnergy[mu,Beta1,DE1,M->Mass],{mu,0,mumax}];
+<------>Do[Enu[nu]=kcal2au*MorseEnergy[nu,Beta2,DE2,M->Mass],{nu,0,numax}];
+<------>Z = Exp[Emu[0]/(kb*T)]*QMorseExact[Beta1,DE1,T,M->Mass];
+<------>Do[Pmu[mu]=Exp[-(Emu[mu]-Emu[0])/(kb*T)]/Z,{mu,0,mumax}];
+<------>Do[
+        fc[mu,nu]=MorseFranckCondonAveraged[mu,nu,DE1,Beta1,DE2,Beta2,d,T,MR,FR,M->Mass,Overlap->sw,Distribution->distr];
+<------><------>dg[mu,nu]=dg0+Enu[nu]-Enu[0]-(Emu[mu]-Emu[0]);
+<------><------>Ea[mu,nu]=(dg[mu,nu]+la)^2/(4*la);
+<------><------>kmunu=PartialRateUKMorse[V,DG,lambda,MR,FR,DE1,Beta1,DE2,Beta2,d,T,mu,nu,M->Mass,Overlap->sw,Distribution->distr];
+<------><------>w[mu,nu]=Pmu[mu]*kmunu*100/totalrate,{mu,0,mumax},{nu,0,numax}
+<------>];
+<------>Grid[Join[{{info,SpanFromLeft}},{headings},Flatten[Table[{mu,nu,ScientificForm[Pmu[mu],6,NumberFormat->(Row[{#1,"e",#3}]&)],PaddedForm[dg[mu,nu]*au2kcal,{6,3}],PaddedForm[Ea[mu,nu]*au2kcal,{6,3}],ScientificForm[fc[mu,nu],6,Nu
+];
+
 
 (*
 Nonadiabatic rate constant and KIE in high-temperature limit for proton donor-acceptor mode
