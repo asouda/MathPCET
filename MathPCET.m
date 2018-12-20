@@ -248,6 +248,25 @@ M->mass of the particle in Daltons (Default - mass of the proton),
 Distribution->
 Classical or Quantal (for R-oscillator distribution function).";
 
+MorseFranckCondonAveraged::usage="HarmonicFranckCondonAveraged[mu_,nu_,DE1_,Beta1_,DE2_,Beta2_,d_,T_,MR_,FR_]:
+Averaged Franck-Condon factor for two Morse wavefunctions.
+Parameters:
+mu, nu - quantum numbers for left and right wavefunctions, respectively,
+DE1 - dissociation energy for the oscillator on the left (kcal/mol),
+Beta1 - beta parameter for the oscillator on the left (1/Bohr),
+DE2 - dissociation energy for the oscillator on the right (kcal/mol),
+Beta2 - beta parameter for the oscillator on the right (1/Bohr),
+d - equilibrium distance between the minima of left and right oscillators (Bohr),
+T - temperature (K),
+MR - mass of the R-oscillator (Dalton),
+FR - frequency of the R-oscillator (1/cm).
+Options:
+M->mass of the particle in Daltons (Default - mass of the proton),
+Overlap->
+Numerical or Analytical (Default - Numerical),
+Distribution->
+Classical or Quantal (for R-oscillator distribution function).";
+
 Sigma2RClassical::usage="Sigma2RClassical[MR_,Freq_,T_]
 Mean square displacement of the classical oscillator.
 Parameters:
@@ -2706,22 +2725,23 @@ HarmonicFranckCondonAveraged[mu_,nu_,f1_,f2_,d_,T_,MR_,FR_,OptionsPattern[{M->Ma
    NIntegrate[integrand[X],{X,0,\[Infinity]}]
 ];
 
-MorseFranckCondonAveraged[mu_,nu_,DE1_,Beta1_,DE2_,Beta2_,d_,T_,MR_,FR_,OptionsPattern[{M->MassH,Overlap->"Numerical",Distribution->"Classical"}]]:=Module[{m,sw,s,s2,distr,integrand},
+MorseFranckCondonAveraged[mu_,nu_,DE1_,Beta1_,DE2_,Beta2_,d_,T_,MR_,FR_,OptionsPattern[{M->MassH,Overlap->"Numerical",Distribution->"Classical"}]]:=
+Module[{m,sw,PR,s,distr,integrand},
    m=OptionValue[M];
    distr=OptionValue[Distribution];
    sw=OptionValue[Overlap];
-   s=Switch[sw,
-           "Numerical",     NMorseOverlap[DE1,Beta1,DE2,Beta2,mu,nu,d,M->m],
-           "Analytical",    MorseOverlap[DE1,Beta1,DE2,Beta2,mu,nu,d,M->m],
-           "AnalyticalSym", MorseOverlapSym[DE1,Beta1,mu,nu,d,M->m],
-            _,              NMorseOverlap[DE1,Beta1,DE2,Beta2,mu,nu,d,M->m]];
-   s2=s^2;
-   integrand[x_]:=Switch[distr,
-                        "Classical",s2*PClassical[T,d,MR,FR,x],
-                        "Quantal",  s2*PQuantal[T,d,MR,FR,x],
-                        _,          s2*PClassical[T,d,MR,FR,x]];
-   NIntegrate[integrand[X],{X,0,\[Infinity]}]
+   PR[x_]:=Switch[distr,
+                  "Classical",PClassical[T,d,MR,FR,x],
+                  "Quantal",  PQuantal[T,d,MR,FR,x],
+                  _,          PClassical[T,d,MR,FR,x]];
+   s[x_]:=Switch[sw,
+                 "Numerical",     NMorseOverlap[DE1,Beta1,DE2,Beta2,mu,nu,x,M->m],
+                 "Analytical",    MorseOverlap[DE1,Beta1,DE2,Beta2,mu,nu,x,M->m],
+                 "AnalyticalSym", MorseOverlapSym[DE1,Beta1,mu,nu,x,M->m],
+                 _,               NMorseOverlap[DE1,Beta1,DE2,Beta2,mu,nu,x,M->m]];
+   NIntegrate[Abs[s[x]]^2*PR[x],{x,0,\[Infinity]}]
 ];
+
 
 (*
 Time correlation functions of the R-oscillator (proton donor-acceptor mode)
@@ -3327,8 +3347,8 @@ Module[{headings,dg0,la,totalrate,sa,s,s2,alpha,dg,Ea,w,Emu,Enu,Pmu,Z,kmunu,info
 	Array[Pmu,mumax+1,0];
 	Do[Emu[mu]=kcal2au*fghList[[1,1,mu+1]],{mu,0,Ns-1}];
 	Do[Enu[nu]=kcal2au*fghList[[2,1,nu+1]],{nu,0,Ns-1}];
-	Z=Sum[Exp[-Emu[mu]/(kb*T)],{mu,1,Ns-1}];
-	Do[Pmu[mu]=Exp[-Emu[mu]/(kb*T)]/Z,{mu,0,mumax}];
+	Z=Sum[Exp[-(Emu[mu]-Emu[0])/(kb*T)],{mu,1,Ns-1}];
+	Do[Pmu[mu]=Exp[-(Emu[mu]-Emu[0])/(kb*T)]/Z,{mu,0,mumax}];
 	Do[
 		s=fghList[[3]][[mu+1,nu+1]];
 		s2[mu,nu]=s^2;
@@ -3469,8 +3489,8 @@ Module[{Emu,Z,Pmu,mu,nu,Ns},
 	Array[Emu,Ns,0];
 	Array[Pmu,mumax+1,0];
 	Do[Emu[mu]=kcal2au*fghList[[1,1,mu+1]],{mu,0,Ns-1}];
-	Z=Sum[Exp[-Emu[mu]/(kb*T)],{mu,0,Ns-1}];
-	Do[Pmu[mu]=Exp[-Emu[mu]/(kb*T)]/Z,{mu,0,mumax}];
+	Z=Sum[Exp[-(Emu[mu]-Emu[0])/(kb*T)],{mu,0,Ns-1}];
+	Do[Pmu[mu]=Exp[-(Emu[mu]-Emu[0])/(kb*T)]/Z,{mu,0,mumax}];
 	Sum[Pmu[mu]*Sum[PartialRateRfixedFGH[fghList,V,DG,lambda,T,mu,nu],{nu,0,numax}],{mu,0,mumax}]
 ];
 
@@ -3598,8 +3618,8 @@ Module[{headings,dg0,la,totalrate,s,s2,dg,Ea,w,Emu,Enu,Pmu,Z,kmunu,info,Ns},
 	Array[Pmu,mumax+1,0];
 	Do[Emu[mu]=kcal2au*fghList[[1,1,mu+1]],{mu,0,Ns-1}];
 	Do[Enu[nu]=kcal2au*fghList[[2,1,nu+1]],{nu,0,Ns-1}];
-	Z=Sum[Exp[-Emu[mu]/(kb*T)],{mu,0,Ns-1}];
-	Do[Pmu[mu]=Exp[-Emu[mu]/(kb*T)]/Z,{mu,0,mumax}];
+	Z=Sum[Exp[-(Emu[mu]-Emu[0])/(kb*T)],{mu,0,Ns-1}];
+	Do[Pmu[mu]=Exp[-(Emu[mu]-Emu[0])/(kb*T)]/Z,{mu,0,mumax}];
 	Do[
 	    s=fghList[[3]][[mu+1,nu+1]];
 	    s2[mu,nu]=s^2;
@@ -3769,18 +3789,18 @@ PartialRateUKMorse[V_,DG_,lambda_,MR_,FR_,DE1_,Beta1_,DE2_,Beta2_,d_,T_,mu_,nu_,
    m=OptionValue[M];
    sw=OptionValue[Overlap];
    distr=OptionValue[Distribution];
-   fc=MorseFranckCondonAveraged[mu,nu,DE1,Beta2,DE2,Beta2,d,T,MR,FR,M->m,Overlap->sw,Distribution->distr];
-<------>prefactor=10^12/au2ps;
-<------>v2=(V*kcal2au)^2;
-<------>la=lambda*kcal2au;
-<------>dg=DG*kcal2au;
-<------>sq=Sqrt[\[Pi]/(kb*T*la)];
-<------>e10=kcal2au*MorseEnergy[0,Beta1,DE1,M->m];
-<------>e1=kcal2au*MorseEnergy[mu,Beta1,DE1,M->m];
-<------>e20=kcal2au*MorseEnergy[0,Beta2,DE1,M->m];
-<------>e2=kcal2au*MorseEnergy[nu,Beta2,DE2,M->m];
-<------>Ea=(dg+la+e2-e20-e1+e10)^2/(4*la);
-<------>prefactor*v2*fc*sq*Exp[-Ea/(kb*T)]
+   fc=MorseFranckCondonAveraged[mu,nu,DE1,Beta1,DE2,Beta2,d,T,MR,FR,M->m,Overlap->sw,Distribution->distr];
+   prefactor=10^12/au2ps;
+   v2=(V*kcal2au)^2;
+   la=lambda*kcal2au;
+   dg=DG*kcal2au;
+   sq=Sqrt[\[Pi]/(kb*T*la)];
+   e10=kcal2au*MorseEnergy[0,Beta1,DE1,M->m];
+   e1=kcal2au*MorseEnergy[mu,Beta1,DE1,M->m];
+   e20=kcal2au*MorseEnergy[0,Beta2,DE2,M->m];
+   e2=kcal2au*MorseEnergy[nu,Beta2,DE2,M->m];
+   Ea=(dg+la+e2-e20-e1+e10)^2/(4*la);
+   prefactor*v2*fc*sq*Exp[-Ea/(kb*T)]
 ];
 
 TotalRateUKMorse[V_,DG_,lambda_,MR_,FR_,DE1_,Beta1_,DE2_,Beta2_,d_,T_,mumax_,numax_,OptionsPattern[{M->MassH,Overlap->"Numerical",Distribution->"Classical"}]]:=
@@ -3788,12 +3808,12 @@ Module[{m,sw,distr,Emu,Z,Pmu,mu,nu},
    m=OptionValue[M];
    sw=OptionValue[Overlap];
    distr=OptionValue[Distribution];
-<------>Array[Emu,mumax+1,0];
-<------>Array[Pmu,mumax+1,0];
-<------>Do[Emu[mu]=kcal2au*MorseEnergy[mu,Beta1,DE1,M->m],{mu,0,mumax}];
-<------>Z = Exp[Emu[0]/(kb*T)]*QMorseExact[Beta1,DE1,T,M->m];
-<------>Do[Pmu[mu]=Exp[-(Emu[mu]-Emu[0])/(kb*T)]/Z,{mu,0,mumax}];
-<------>Sum[Pmu[mu]*Sum[PartialRateUKMorse[V,DG,lambda,MR,FR,DE1,Beta1,DE2,Beta2,d,T,mu,nu,M->m,Overlap->sw,Distribution->distr],{nu,0,numax}],{mu,0,mumax}]
+   Array[Emu,mumax+1,0];
+   Array[Pmu,mumax+1,0];
+   Do[Emu[mu]=kcal2au*MorseEnergy[mu,Beta1,DE1,M->m],{mu,0,mumax}];
+   Z = Exp[Emu[0]/(kb*T)]*QMorseExact[Beta1,DE1,T,M->m];
+   Do[Pmu[mu]=Exp[-(Emu[mu]-Emu[0])/(kb*T)]/Z,{mu,0,mumax}];
+   Sum[Pmu[mu]*Sum[PartialRateUKMorse[V,DG,lambda,MR,FR,DE1,Beta1,DE2,Beta2,d,T,mu,nu,M->m,Overlap->sw,Distribution->distr],{nu,0,numax}],{mu,0,mumax}]
 ];
 
 (*
@@ -3844,33 +3864,33 @@ numax - highest quantum number for the product vibronic states.
 
 TableRateUKMorse[V_,DG_,lambda_,MR_,FR_,DE1_,Beta1_,DE2_,Beta2_,d_,T_,mumax_,numax_,OptionsPattern[{M->MassH,Overlap->"Numerical",Distribution->"Classical"}]]:=
 Module[{sw,distr,headings,dg0,la,totalrate,s,s2,alpha,dg,Ea,w,Emu,Enu,Pmu,Z,kmunu,fc,info,Mass},
-<------>sw=OptionValue[Overlap];
-<------>distr=OptionValue[Distribution];
-<------>Mass=OptionValue[M];
-<------>headings={"\[Mu]","\[Nu]",strpmu,strdgmunu,strdgddmunu,"<"<>strs2munu<>">","exp(-\[Beta]"<>strdgddmunu<>")","%"};
-<------>info="Isotope: "<>ToString[NumberForm[Mass,3]]<>"amu; "<>strdg00<>"="<>ToString[NumberForm[DG,4]]<>"kcal/mol; \[Lambda]="<>ToString[NumberForm[lambda,4]]<>"kcal/mol; M="<>ToString[NumberForm[MR,3]]<>"amu; \[CapitalOmega]="<>T
-<------>dg0=DG*kcal2au;
-<------>la=lambda*kcal2au;
-<------>totalrate=TotalRateUKHarmonic[V,DG,lambda,MR,FR,DE1,Beta1,DE2,Beta2,d,T,mumax,numax,M->OptionValue[M],Overlap->sw,Distribution->distr];
-<------>Array[fc,{mumax+1,numax+1},{0,0}];
-<------>Array[dg,{mumax+1,numax+1},{0,0}];
-<------>Array[Ea,{mumax+1,numax+1},{0,0}];
-<------>Array[w,{mumax+1,numax+1},{0,0}];
-<------>Array[Emu,mumax+1,0];
-<------>Array[Enu,numax+1,0];
-<------>Array[Pmu,mumax+1,0];
-<------>Do[Emu[mu]=kcal2au*MorseEnergy[mu,Beta1,DE1,M->Mass],{mu,0,mumax}];
-<------>Do[Enu[nu]=kcal2au*MorseEnergy[nu,Beta2,DE2,M->Mass],{nu,0,numax}];
-<------>Z = Exp[Emu[0]/(kb*T)]*QMorseExact[Beta1,DE1,T,M->Mass];
-<------>Do[Pmu[mu]=Exp[-(Emu[mu]-Emu[0])/(kb*T)]/Z,{mu,0,mumax}];
-<------>Do[
-        fc[mu,nu]=MorseFranckCondonAveraged[mu,nu,DE1,Beta1,DE2,Beta2,d,T,MR,FR,M->Mass,Overlap->sw,Distribution->distr];
-<------><------>dg[mu,nu]=dg0+Enu[nu]-Enu[0]-(Emu[mu]-Emu[0]);
-<------><------>Ea[mu,nu]=(dg[mu,nu]+la)^2/(4*la);
-<------><------>kmunu=PartialRateUKMorse[V,DG,lambda,MR,FR,DE1,Beta1,DE2,Beta2,d,T,mu,nu,M->Mass,Overlap->sw,Distribution->distr];
-<------><------>w[mu,nu]=Pmu[mu]*kmunu*100/totalrate,{mu,0,mumax},{nu,0,numax}
-<------>];
-<------>Grid[Join[{{info,SpanFromLeft}},{headings},Flatten[Table[{mu,nu,ScientificForm[Pmu[mu],6,NumberFormat->(Row[{#1,"e",#3}]&)],PaddedForm[dg[mu,nu]*au2kcal,{6,3}],PaddedForm[Ea[mu,nu]*au2kcal,{6,3}],ScientificForm[fc[mu,nu],6,Nu
+   sw=OptionValue[Overlap];
+   distr=OptionValue[Distribution];
+   Mass=OptionValue[M];
+   headings={"\[Mu]","\[Nu]",strpmu,strdgmunu,strdgddmunu,"<"<>strs2munu<>">","exp(-\[Beta]"<>strdgddmunu<>")","%"};
+   info="Isotope: "<>ToString[NumberForm[Mass,3]]<>"amu; "<>strdg00<>"="<>ToString[NumberForm[DG,4]]<>"kcal/mol; \[Lambda]="<>ToString[NumberForm[lambda,4]]<>"kcal/mol; M="<>ToString[NumberForm[MR,3]]<>"amu; \[CapitalOmega]="<>T
+   dg0=DG*kcal2au;
+   la=lambda*kcal2au;
+   totalrate=TotalRateUKHarmonic[V,DG,lambda,MR,FR,DE1,Beta1,DE2,Beta2,d,T,mumax,numax,M->OptionValue[M],Overlap->sw,Distribution->distr];
+   Array[fc,{mumax+1,numax+1},{0,0}];
+   Array[dg,{mumax+1,numax+1},{0,0}];
+   Array[Ea,{mumax+1,numax+1},{0,0}];
+   Array[w,{mumax+1,numax+1},{0,0}];
+   Array[Emu,mumax+1,0];
+   Array[Enu,numax+1,0];
+   Array[Pmu,mumax+1,0];
+   Do[Emu[mu]=kcal2au*MorseEnergy[mu,Beta1,DE1,M->Mass],{mu,0,mumax}];
+   Do[Enu[nu]=kcal2au*MorseEnergy[nu,Beta2,DE2,M->Mass],{nu,0,numax}];
+   Z = Exp[Emu[0]/(kb*T)]*QMorseExact[Beta1,DE1,T,M->Mass];
+   Do[Pmu[mu]=Exp[-(Emu[mu]-Emu[0])/(kb*T)]/Z,{mu,0,mumax}];
+   Do[
+      fc[mu,nu]=MorseFranckCondonAveraged[mu,nu,DE1,Beta1,DE2,Beta2,d,T,MR,FR,M->Mass,Overlap->sw,Distribution->distr];
+      dg[mu,nu]=dg0+Enu[nu]-Enu[0]-(Emu[mu]-Emu[0]);
+      Ea[mu,nu]=(dg[mu,nu]+la)^2/(4*la);
+      kmunu=PartialRateUKMorse[V,DG,lambda,MR,FR,DE1,Beta1,DE2,Beta2,d,T,mu,nu,M->Mass,Overlap->sw,Distribution->distr];
+      w[mu,nu]=Pmu[mu]*kmunu*100/totalrate,{mu,0,mumax},{nu,0,numax}
+   ];
+   Grid[Join[{{info,SpanFromLeft}},{headings},Flatten[Table[{mu,nu,ScientificForm[Pmu[mu],6,NumberFormat->(Row[{#1,"e",#3}]&)],PaddedForm[dg[mu,nu]*au2kcal,{6,3}],PaddedForm[Ea[mu,nu]*au2kcal,{6,3}],ScientificForm[fc[mu,nu],6,Nu
 ];
 
 
@@ -4027,8 +4047,8 @@ Module[{Emu,Z,Pmu,mu,nu,Ns},
 	Array[Emu,Ns,0];
 	Array[Pmu,mumax+1,0];
 	Do[Emu[mu]=kcal2au*fghList[[1,1,mu+1]],{mu,0,Ns-1}];
-	Z=Sum[Exp[-Emu[mu]/(kb*T)],{mu,0,Ns-1}];
-	Do[Pmu[mu]=Exp[-Emu[mu]/(kb*T)]/Z,{mu,0,mumax}];
+	Z=Sum[Exp[-(Emu[mu]-Emu[0])/(kb*T)],{mu,0,Ns-1}];
+	Do[Pmu[mu]=Exp[-(Emu[mu]-Emu[0])/(kb*T)]/Z,{mu,0,mumax}];
 	Sum[Pmu[mu]*Sum[PartialRateRhighTFGH[fghList,V,DG,lambda,MR,Freq,T,mu,nu,Alpha->OptionValue[Alpha]],{nu,0,numax}],{mu,0,mumax}]
 ];
 
@@ -4178,8 +4198,8 @@ Module[{sa,headings,dg0,la,totalrate,s,s2,alpha,dg,Ea,w,Emu,Enu,Pmu,Z,kmunu,info
 	Array[Pmu,mumax+1,0];
 	Do[Emu[mu]=kcal2au*fghList[[1,1,mu+1]],{mu,0,Ns-1}];
 	Do[Enu[nu]=kcal2au*fghList[[2,1,nu+1]],{nu,0,Ns-1}];
-	Z=Sum[Exp[-Emu[mu]/(kb*T)],{mu,0,Ns-1}];
-	Do[Pmu[mu]=Exp[-Emu[mu]/(kb*T)]/Z,{mu,0,mumax}];
+	Z=Sum[Exp[-(Emu[mu]-Emu[0])/(kb*T)],{mu,0,Ns-1}];
+	Do[Pmu[mu]=Exp[-(Emu[mu]-Emu[0])/(kb*T)]/Z,{mu,0,mumax}];
 	Do[
 		s=fghList[[3]][[mu+1,nu+1]];
 		s2[mu,nu]=s^2;
@@ -4352,8 +4372,8 @@ Module[{Emu,Z,Pmu,mu,nu,Ns},
 	Array[Emu,Ns,0];
 	Array[Pmu,mumax+1,0];
 	Do[Emu[mu]=kcal2au*fghList[[1,1,mu+1]],{mu,0,Ns-1}];
-	Z=Sum[Exp[-Emu[mu]/(kb*T)],{mu,0,Ns-1}];
-	Do[Pmu[mu]=Exp[-Emu[mu]/(kb*T)]/Z,{mu,0,mumax}];
+	Z=Sum[Exp[-(Emu[mu]-Emu[0])/(kb*T)],{mu,0,Ns-1}];
+	Do[Pmu[mu]=Exp[-(Emu[mu]-Emu[0])/(kb*T)]/Z,{mu,0,mumax}];
 	Sum[Pmu[mu]*Sum[PartialRateRlowTFGH[fghList,V,DG,lambda,MR,Freq,T,mu,nu,Alpha->OptionValue[Alpha]],{nu,0,numax}],{mu,0,mumax}]
 ];
 
@@ -4507,8 +4527,8 @@ Module[{sa,headings,dg0,la,totalrate,s,s2,alpha,dg,Ea,w,Emu,Enu,Pmu,Z,kmunu,info
 	Array[Pmu,mumax+1,0];
 	Do[Emu[mu]=kcal2au*fghList[[1,1,mu+1]],{mu,0,Ns-1}];
 	Do[Enu[nu]=kcal2au*fghList[[2,1,nu+1]],{nu,0,Ns-1}];
-	Z=Sum[Exp[-Emu[mu]/(kb*T)],{mu,0,Ns-1}];
-	Do[Pmu[mu]=Exp[-Emu[mu]/(kb*T)]/Z,{mu,0,mumax}];
+	Z=Sum[Exp[-(Emu[mu]-Emu[0])/(kb*T)],{mu,0,Ns-1}];
+	Do[Pmu[mu]=Exp[-(Emu[mu]-Emu[0])/(kb*T)]/Z,{mu,0,mumax}];
 	Do[
 		s=fghList[[3]][[mu+1,nu+1]];
 		s2[mu,nu]=s^2;
