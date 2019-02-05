@@ -1347,6 +1347,22 @@ Returns a nested list of the following structure:
 )
 ";
 
+FGHMax::usage="FGHMax[potx,nGrid,nRoots]
+Input parameters:
+potx - table with the 1D potential: {x,U(x)}, x in \[Angstrom], U(X) in Hartrees;\[IndentingNewLine]nGrid - number of grid points (arbitrary);\[IndentingNewLine]nRoots - number of lowest eigenstates inquired.\[IndentingNewLine]Options:
+M \[Rule] particle mass in Daltons (amu).
+Output:
+Returns a nested list of the following structure (energies in kcal/mol, coordinates in \[Angstrom]):
+{
+ {energy(1), energy(2),...,energy(nRoots)},
+ {{x(1),pot(1)},{x(2),pot(2)},...,{x(nGrid),pot(nGrid)}},
+ {
+   {{x(1),wf[1](1)},{x(2),wf[1](2)},...,{x(nGrid),wf[1](nGrid)}},...,
+   {{x(1),wf[nRoots](1)},{x(2),wf[nRoots](2)},...,{x(nGrid),wf[nRoots](nGrid)}}
+ },
+}
+";
+
 Fermi::usage="Fermi[eps,T]
 Parameters:
 eps - epsilon in Hartrees;
@@ -2687,6 +2703,44 @@ GenGridSolverND[vGrid_,a_,nRoots_,OptionsPattern[{M->1,DiffOrder->4}]]:=
       en=Reverse@Re@Eigenvalues[h,-nRoots,Method->{"Arnoldi","Criteria"->"RealPart"}];
       v=Reverse@Re@Eigenvectors[h,-nRoots,Method->{"Arnoldi","Criteria"->"RealPart"}];
       {en+Vmin,Table[ArrayReshape[v[[i]],dims],{i,1,Length[v]}]}
+];
+
+(*
+DVR direct, without Fourier TRansform
+(original code by Max Secor, 2019)
+*)
+FGHMax[potx_,nGrid_,nRoots_,OptionsPattern[{M->MassH}]]:=Module[
+{\[Mu],potSpline,potxSplined,pot,xGrid,wavefunctions,k,xLeft,xRight,dx, KE,PE,Ham,energies,vectors},
+
+\[Mu]=OptionValue[M]*Dalton;
+potSpline=Interpolation[potx, Method->"Spline",InterpolationOrder->3];
+
+(* calculate potential on the grid *)
+xLeft=Min[potx[[All,1]]];
+xRight=Max[potx[[All,1]]];
+dx=(xRight-xLeft)/(nGrid-1);
+xGrid=Table[x,{x,xLeft,xRight,dx}];
+pot=Table[potSpline[x],{x,xLeft,xRight,dx}];
+potxSplined=Table[{x,potSpline[x]au2kcal},{x,xLeft,xRight,dx}];
+
+(*Construct kinetic and potential energy matrices*)
+k=Pi/(dx a2bohr);
+KE=Table[
+1/(2\[Mu]) If[
+i==j,k^2/3,
+((2*k^2)/\[Pi]^2)*(-1)^(i-j)/(i-j)^2
+],
+{i,0,nGrid-1},{j,0,nGrid-1}];
+PE=DiagonalMatrix[pot];
+
+(*Construct the Hamiltionian matrix and diagonalize*)
+Ham=N[KE+PE];
+energies = Reverse@Eigenvalues[Ham, -nRoots, Method -> {"Arnoldi", "Criteria" -> "RealPart"}];
+vectors = Reverse@Eigenvectors[Ham, -nRoots, Method -> {"Arnoldi", "Criteria" -> "RealPart"}];
+wavefunctions=Table[Table[{xGrid[[k]],vectors[[i,k]]},{k,1,nGrid}],{i,1,nRoots}];
+
+(*Output*)
+{energies au2kcal,potxSplined,wavefunctions}
 ];
 
 (*
