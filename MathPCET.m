@@ -1349,8 +1349,11 @@ Returns a nested list of the following structure:
 
 FGHMax::usage="FGHMax[potx,nGrid,nRoots]
 Input parameters:
-potx - table with the 1D potential: {x,U(x)}, x in \[Angstrom], U(X) in Hartrees;\[IndentingNewLine]nGrid - number of grid points (arbitrary);\[IndentingNewLine]nRoots - number of lowest eigenstates inquired.\[IndentingNewLine]Options:
-M \[Rule] particle mass in Daltons (amu).
+potx - table with the 1D potential: {x,U(x)}, x in \[Angstrom], U(X) in Hartrees;
+nGrid - number of grid points (arbitrary);
+nRoots - number of lowest eigenstates inquired.
+Options:
+M -> particle mass in Daltons (amu).
 Output:
 Returns a nested list of the following structure (energies in kcal/mol, coordinates in \[Angstrom]):
 {
