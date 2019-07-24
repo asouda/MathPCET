@@ -1315,7 +1315,7 @@ KappaCouplingCommand="/usr/local/kappa_coupling/bin/kappa_coupling.bin";
 GridSolverND::usage="GridSolverND[vGrid, delta, n]
 The input parameters:
 vGrid - N-dimensional matrix of the potential values (atomic units) on the N-dimensional grid;
-delta - grid size (in atomic units), the same in each dimension;
+delta - grid spacing (in atomic units), the same in each dimension;
 n - number of lowest eigenvalues (and eigenvectors) desired;
 Options:
 M -> mass of the particle in electron mass units (Daltons)
@@ -1332,7 +1332,7 @@ Returns a nested list of the following structure:
 GenGridSolverND::usage="GenGridSolverND[vGrid, delta, n]
 The input parameters:
 vGrid - N-dimensional matrix of the potential values (atomic units) on the N-dimensional grid;
-delta - grid size (in atomic units), the same in each dimension;
+delta - grid spacing (in atomic units), the same in each dimension;
 n - number of lowest eigenvalues (and eigenvectors) desired;
 Options:
 M -> mass of the particle in Daltons (default is mass of an electron = 1 Dalton)
