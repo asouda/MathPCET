@@ -14,7 +14,7 @@ BeginPackage["MathPCET`"]
 
 Needs["NumericalCalculus`"]
 
-MorsePotential::usage="MorsePotential[DE,Beta,x]\[AliasDelimiter]>
+MorsePotential::usage="MorsePotential[DE,Beta,x] ->
 Returns Morse potential in kcal/mol at x (Bohr) with the minimum at x=0.
 Parameters:
 DE is the dissociation energy (kcal/mol),
@@ -1247,7 +1247,7 @@ file - name of the file with the potential data (three columns: x(A) Ureactant(H
 nGridPoints - number of grid points (should be power of two);
 nStates - number of vibrational states in each well to calculate.
 Options:
-M -> mass of the particle in Daltons (Default - mass of the proton).
+M -> mass of the particle in Daltons (default is mass of a proton).
 Output:
 Returns a nested list of the following structure:
 (
@@ -1274,7 +1274,7 @@ file - name of the file with the potential data (four columns: x(A) Ureactant(kc
 nGridPoints - number of grid points (should be power of two);
 nStates - number of vibrational states in each well to calculate.
 Options:
-M -> mass of the particle in Daltons (Default - mass of the proton).
+M -> mass of the particle in Daltons (Default - mass of a proton).
 Output:
 Returns a nested list of the following structure:
 (
@@ -1315,12 +1315,12 @@ KappaCouplingCommand="/usr/local/kappa_coupling/bin/kappa_coupling.bin";
 GridSolverND::usage="GridSolverND[vGrid, delta, n]
 The input parameters:
 vGrid - N-dimensional matrix of the potential values (atomic units) on the N-dimensional grid;
-delta - grid spacing (in atomic units), the same in each dimension;
+delta - grid spacing (in Bohrs), the same in each dimension;
 n - number of lowest eigenvalues (and eigenvectors) desired;
 Options:
-M -> mass of the particle in electron mass units (Daltons)
+M -> mass of the particle in Daltons (default is mass of a proton, MassH)
 Output:
-Returns a nested list of the following structure:
+Returns a nested list of the following structure (energies are in atomic units):
 (
    (energyLevel_1, energyLevel_2, ..., energyLevel_n),
    (
@@ -1332,14 +1332,14 @@ Returns a nested list of the following structure:
 GenGridSolverND::usage="GenGridSolverND[vGrid, delta, n]
 The input parameters:
 vGrid - N-dimensional matrix of the potential values (atomic units) on the N-dimensional grid;
-delta - grid spacing (in atomic units), the same in each dimension;
+delta - grid spacing (in Bohrs), the same in each dimension;
 n - number of lowest eigenvalues (and eigenvectors) desired;
 Options:
-M -> mass of the particle in Daltons (default is mass of an electron = 1 Dalton)
-DiffOrder -> accuracy order for the nnnumerical second derivatrive on the grid (default is 4)
+M -> mass of the particle in Daltons (default is mass of a proton)
+DiffOrder -> accuracy order for the numerical second derivative on the grid (default is 4)
 Output:
-Returns a nested list of the following structure:
-(
+Returns a nested list of the following structure (energies are in atomic units):
+{
    (energyLevel_1, energyLevel_2, ..., energyLevel_n),
    (
       (wavefunctionGrid_1, wavefunctionGrid_2, ..., wavefunctionGrid_n)
@@ -1349,13 +1349,13 @@ Returns a nested list of the following structure:
 
 FGHMax::usage="FGHMax[potx,nGrid,nRoots]
 Input parameters:
-potx - table with the 1D potential: {x,U(x)}, x in \[Angstrom], U(X) in Hartrees;
+potx - table with the 1D potential: {x,U(x)}, x in Angstroms, U(X) in Hartrees;
 nGrid - number of grid points (arbitrary);
 nRoots - number of lowest eigenstates inquired.
 Options:
 M -> particle mass in Daltons (amu).
 Output:
-Returns a nested list of the following structure (energies in kcal/mol, coordinates in \[Angstrom]):
+Returns a nested list of the following structure (energies in kcal/mol, coordinates in Angstroms):
 {
  {energy(1), energy(2),...,energy(nRoots)},
  {{x(1),pot(1)},{x(2),pot(2)},...,{x(nGrid),pot(nGrid)}},
@@ -1402,9 +1402,9 @@ DE2 - dissociation energy of the oscillator on the right in kcal/mol;
 Beta2 - beta parameter for oscillator on the right in inverse Bohr;
 mu - quantum number of oscillator on the left;
 nu - quantum number of oscillator on the right;
-d - distance between the minima of the displaced potentials in bohr;
+d - distance between the minima of the displaced potentials in Bohrs;
 Options:
-M -> mass of the particle in Daltons (Default - mass of the proton);
+M -> mass of the particle in Daltons (Default - mass of a proton);
 Step -> step to take in numerical differentiaion (Default - 0.0001);
 Returns the total reorganization energy in kcal/mol";
 
@@ -2018,7 +2018,7 @@ Lambda1 is Co(II) to Co(I) reorganization energy(eV);
 Lambda2 is Co(III) to Co(II) reorganization energy(eV);
 pKaAcid is Acid pKa;
 Options:
-Ref\[Rule]reference electrode (Default - HA/H2)";
+Ref -> reference electrode (Default - HA/H2)";
 
 
 Pathway2::usage="Pathway2[Eta,e1,pKa1,e3,pKa2,e4,Lambda1,Lambda3,pKaAcid]
@@ -2036,7 +2036,7 @@ Lambda1 is Co(II) to Co(I) reorganization energy(eV);
 Lambda3 is Co(III)H to Co(II)H reorganization energy(eV);
 pKaAcid is Acid pKa;
 Options:
-Ref\[Rule]reference electrode (Default - HA/H2)";
+Ref -> reference electrode (Default - HA/H2)";
 
 
 Pathway3::usage="Pathway3[Eta,e1,Lambda1,e4,Lambda4,pKa2,pKaAcid]
@@ -2052,7 +2052,7 @@ Lambda4 is Co(I) to Co(0) reorganization energy(eV);
 pKa2 is pKa of Co(II)H;
 pKaAcid is Acid pKa,
 Options:
-Ref\[Rule]reference electrode (Default - HA/H2)";
+Ref -> reference electrode (Default - HA/H2)";
 
 
 (*
@@ -2091,9 +2091,11 @@ Dalton=1822.8900409014022`15;
 MassH=1.0072756064562605`15;
 MassD=2.0135514936645316`15;
 MassT=3.0160492`15;
+MassE=1/Dalton;
 mH=MassH*Dalton;
 mD=MassD*Dalton;
 mT=MassT*Dalton;
+mE=1;
 kb=3.16683`10*10^-6;
 
 strcm=ToString[Superscript["cm","-1"],TraditionalForm];
@@ -2669,9 +2671,9 @@ DeleteFile[FileNames[filename<>"_*.dat"]];
 DVR for an arbitrary N-dimensional potential on the grid: energy levels and wavefunctions
 *)
 
-GridSolverND[vGrid_, \[Delta]_, n_, OptionsPattern[{M -> 1}]] := 
+GridSolverND[vGrid_, \[Delta]_, n_, OptionsPattern[{M -> MassH}]] := 
   Module[{Vmin,vGrid0,tuples, dims, ndim, \[Mu], T, V, h, en, v},
-     \[Mu] = OptionValue[M];
+     \[Mu] = OptionValue[M]*Dalton;
      dims = Dimensions[vGrid];
      Vmin=Min[vGrid];
      vGrid0=vGrid-Vmin;
@@ -2690,17 +2692,17 @@ DVR for an arbitrary N-dimensional potential on the grid: energy levels and wave
 General approach with an arbitrary difference order for the numerical second derivative
 *)
 
-GenGridSolverND[vGrid_,a_,nRoots_,OptionsPattern[{M->1,DiffOrder->4}]]:=
+GenGridSolverND[vGrid_,\[Delta]_,nRoots_,OptionsPattern[{M->MassH,DiffOrder->4}]]:=
    Module[{Vmin,vGrid0,\[Mu],dims,ndim,Ranges,tuples,T,V,h,en,v,nOrder},
       nOrder=OptionValue[DiffOrder];
-      \[Mu]=OptionValue[M];
+      \[Mu]=OptionValue[M]*Dalton;
       dims=Dimensions[vGrid];
       Vmin=Min[vGrid];
       vGrid0=vGrid-Vmin;
       ndim=Length[dims];
       Ranges=Table[Range[1,dims[[idim]]],{idim,1,ndim}];
       tuples=Tuples[Ranges];
-      T=-(1/(2 \[Mu] a^2)) Sum[NDSolve`FiniteDifferenceDerivative[i,Ranges,"DifferenceOrder"->nOrder]["DifferentiationMatrix"],{i,DiagonalMatrix[Table[2,{i,1,ndim}]]}];
+      T=-(1/(2 \[Mu] \[Delta]^2)) Sum[NDSolve`FiniteDifferenceDerivative[i,Ranges,"DifferenceOrder"->nOrder]["DifferentiationMatrix"],{i,DiagonalMatrix[Table[2,{i,1,ndim}]]}];
       V=DiagonalMatrix[SparseArray[(vGrid0[[##]]&@@@tuples)]];
       h=N[T+V];
       en=Reverse@Re@Eigenvalues[h,-nRoots,Method->{"Arnoldi","Criteria"->"RealPart"}];
@@ -2713,7 +2715,7 @@ DVR direct, without Fourier TRansform
 (original code by Max Secor, 2019)
 *)
 FGHMax[potx_,nGrid_,nRoots_,OptionsPattern[{M->MassH}]]:=Module[
-{\[Mu],potSpline,potxSplined,pot,xGrid,wavefunctions,k,xLeft,xRight,dx, KE,PE,Ham,energies,vectors},
+{\[Mu],potSpline,potxSplined,pot,xGrid,wavefunctions,k,xLeft,xRight,dx,KE,PE,Ham,energies,vectors},
 
 \[Mu]=OptionValue[M]*Dalton;
 potSpline=Interpolation[potx, Method->"Spline",InterpolationOrder->3];
@@ -2743,7 +2745,7 @@ vectors = Reverse@Eigenvectors[Ham, -nRoots, Method -> {"Arnoldi", "Criteria" ->
 wavefunctions=Table[Table[{xGrid[[k]],vectors[[i,k]]},{k,1,nGrid}],{i,1,nRoots}];
 
 (*Output*)
-{energies au2kcal,potxSplined,wavefunctions}
+{energies*au2kcal,potxSplined,wavefunctions}
 ];
 
 (*
