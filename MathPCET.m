@@ -3949,7 +3949,8 @@ Module[{sw,distr,headings,dg0,la,totalrate,s,s2,alpha,dg,Ea,w,Emu,Enu,Pmu,Z,kmun
       kmunu=PartialRateUKMorse[V,DG,lambda,MR,FR,DE1,Beta1,DE2,Beta2,d,T,mu,nu,M->Mass,Overlap->sw,Distribution->distr];
       w[mu,nu]=Pmu[mu]*kmunu*100/totalrate,{mu,0,mumax},{nu,0,numax}
    ];
-   Grid[Join[{{info,SpanFromLeft}},{headings},Flatten[Table[{mu,nu,ScientificForm[Pmu[mu],6,NumberFormat->(Row[{#1,"e",#3}]&)],PaddedForm[dg[mu,nu]*au2kcal,{6,3}],PaddedForm[Ea[mu,nu]*au2kcal,{6,3}],ScientificForm[fc[mu,nu],6,Nu
+   Grid[Join[{{info,SpanFromLeft}},{headings},Flatten[Table[{mu,nu,ScientificForm[Pmu[mu],6,NumberFormat->(Row[{#1,"e",#3}]&)],PaddedForm[dg[mu,nu]*au2kcal,{6,3}],PaddedForm[Ea[mu,nu]*au2kcal,{6,3}],ScientificForm[fc[mu,nu],6,NumberFormat->(Row[{#1,"e",#3}]&)],ScientificForm[Exp[-Ea[mu,nu]/(kb*
+T)],6,NumberFormat->(Row[{#1,"e",#3}]&)],PaddedForm[w[mu,nu],{7,3}]},{mu,0,mumax},{nu,0,numax}],1]],Frame->All,Spacings->{Automatic,1}]
 ];
 
 
